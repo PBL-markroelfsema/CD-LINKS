@@ -16,6 +16,7 @@ setwd("D:/Rwork/CD-LINKS")
 currentdir <- getwd()
 factsheetdir <- "D:/Rwork/factsheet_oct2017/src"
 #factsheetdir <- "~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS/CD-LINKS/6_R/factsheet_oct2017/src"
+factsheetdir <- "~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS/CD-LINKS/6_R/factsheet_oct2017/src"
 setwd(factsheetdir)
 source('main_WP2_3_indicators.R')
 setwd(currentdir)
