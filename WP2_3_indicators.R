@@ -5,6 +5,7 @@ library(XLConnect)
 library(data.table)
 
 setwd("D:/Rwork/CD-LINKS")
+#setwd("~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS/CD-LINKS/6_R/CD-LINKS")
 
 # create CD-LINKS model outputs (all)
 
@@ -14,6 +15,7 @@ setwd("D:/Rwork/CD-LINKS")
 #all_processed <- ReadFactSheetData('factsheet', all_original)
 currentdir <- getwd()
 factsheetdir <- "D:/Rwork/factsheet_oct2017/src"
+#factsheetdir <- "~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS/CD-LINKS/6_R/factsheet_oct2017/src"
 setwd(factsheetdir)
 source('main_WP2_3_indicators.R')
 setwd(currentdir)
