@@ -4,7 +4,7 @@ library(stringr)
 library(XLConnect)
 library(data.table)
 
-setwd("~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS/CD-LINKS/6_R")
+setwd("D:/Rwork/CD-LINKS")
 
 # create CD-LINKS model outputs (all)
 
@@ -13,7 +13,7 @@ setwd("~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS/CD-LINKS/6_R")
 #all_original <- ReadFactSheetData_raw('factsheet')
 #all_processed <- ReadFactSheetData('factsheet', all_original)
 currentdir <- getwd()
-factsheetdir <- paste0(currentdir, "/factsheet_oct2017/src")
+factsheetdir <- "D:/Rwork/factsheet_oct2017/src"
 setwd(factsheetdir)
 source('main_WP2_3_indicators.R')
 setwd(currentdir)
@@ -54,7 +54,7 @@ models_global <- c("AIM/CGE", "COPPE-COFFEE 1.0", "DNE21+ V.14", "GEM-E3", "IMAG
 scens <- c("No policy", "National policies", "NDC", "2C_50", "2C_66", "1.5C_50", "2C_66 (2030)")
 regions <- c("BRA", "CHN", "EU", "IND", "JPN", "RUS", "USA", "World")
 years <- c('2005', '2010', '2015', '2020', '2025', '2030', '2035', '2040', '2045', '2050', '2055', '2060', '2065', '2070', '2075', '2080', '2085', '2090', '2095', '2100')
-statistics <- c('mean', 'median', 'min', 'max', 'tenp', 'ninetyp')
+stats <- c('mean', 'median', 'min', 'max', 'tenp', 'ninetyp')
 
 GWPCH4 = 25
 GWPN2O = 298
@@ -65,10 +65,10 @@ Rundir=paste("~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS", sep="")
 Project=paste("CD-LINKS")
 TIMERGeneration = 'TIMER_2015'
 # Source scripts (after setting working directory)
-source('TIMER_output/functions/Settings.R')
-source('TIMER_output/functions/General Functions.R')
-source('TIMER_output/functions/Import_TIMER_output.R')
-source('TIMER_output/functions/Process_TIMER_output.R')
+source('../TIMER_output/functions/Settings.R')
+source('../TIMER_output/functions/General Functions.R')
+source('../TIMER_output/functions/Import_TIMER_output.R')
+source('../TIMER_output/functions/Process_TIMER_output.R')
 # Read no policy scenario
 #NoPolicy <- ImportTimerScenario('NoPolicy','NoPolicy', Rundir, Project, TIMERGeneration)
 #NoPolicy_ind <- ProcessTimerScenario(NoPolicy, Rundir, Project)
@@ -240,24 +240,11 @@ data_figure5_stat$statistic <- factor(data_figure5_stat$statistic, level=stats)
 colnames(data_figure5_stat) = gsub("X", "", colnames(data_figure5_stat))
 write.table(data_figure5_stat , file="data/figure5_stat.csv", sep=";", row.names = FALSE)
 
-# TODO
-# create budgets used for figure
-scenario_budgets <- c('2C_50', '2C_66', '1.5C_50')
-budgets <- c(1600, 1000, 400)
-
 # plot
 data_figure5_plot <- gather(data_figure5, 6:ncol(data_figure5), key="year", value=value)
 data_figure5_plot <- filter(data_figure5_plot, region=="World", Category=="Carbon budget 1000", year>=start_year_fig5-5, year<=2020)
 ggplot(data_figure5_plot) + geom_point(aes(x=year, y=value, colour=model)) + ylim(0, NA)
        
 
-# OLD
-d_cd_links_CO2 <- filter(all_cd_links, Category %in% cats, region=="World", variable=="Emissions|CO2")
-d_selec_CO2 <- ddply(d_cd_links_CO2, .(Category, period, variable), summarise, median=median(value, na.rm=TRUE), minimum=min(value, na.rm=TRUE), maximum=max(value, na.rm=TRUE))
-write.table(d_selec_CO2, file="data/Figure1_CO2.csv", sep=";", row.names = FALSE)
-
-d_cd_links_CO2_excl_AFOLU <- filter(all_cd_links, Category %in% cats, region=="World", variable=="Emissions|CO2")
-d_selec_CO2_excl_AFOLU <- ddply(d_cd_links_CO2_excl_AFOLU, .(Category, period, variable), summarise, median=median(value, na.rm=TRUE), minimum=min(value, na.rm=TRUE), maximum=max(value, na.rm=TRUE))
-write.table(d_selec_CO2_excl_AFOLU, file="data/Figure1_CO2_excl_AFOLU.csv", sep=";", row.names = FALSE)
 
 
