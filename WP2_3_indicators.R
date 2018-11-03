@@ -4,7 +4,7 @@ library(stringr)
 library(XLConnect)
 library(data.table)
 
-setwd("~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS/CD-LINKS/6_R")
+setwd("~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS/CD-LINKS/6_R/CD-LINKS")
 
 # create CD-LINKS model outputs (all)
 
@@ -13,9 +13,9 @@ setwd("~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS/CD-LINKS/6_R")
 #all_original <- ReadFactSheetData_raw('factsheet')
 #all_processed <- ReadFactSheetData('factsheet', all_original)
 currentdir <- getwd()
-factsheetdir <- paste0(currentdir, "/factsheet_oct2017/src")
+factsheetdir <- "~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS/CD-LINKS/6_R/factsheet_oct2017/src"
 setwd(factsheetdir)
-source('main_WP2_3_indicators.R')
+source('main_WP2_3_indicators.R', chdir=TRUE)
 setwd(currentdir)
 all_cd_links <- all
 # changes: only global models, Selection of Categories, change Category->scenario, period->year, remove Baseline
@@ -65,10 +65,10 @@ Rundir=paste("~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS", sep="")
 Project=paste("CD-LINKS")
 TIMERGeneration = 'TIMER_2015'
 # Source scripts (after setting working directory)
-source('TIMER_output/functions/Settings.R')
-source('TIMER_output/functions/General Functions.R')
-source('TIMER_output/functions/Import_TIMER_output.R')
-source('TIMER_output/functions/Process_TIMER_output.R')
+source('../TIMER_output/functions/Settings.R')
+source('../TIMER_output/functions/General Functions.R')
+source('../TIMER_output/functions/Import_TIMER_output.R')
+source('../TIMER_output/functions/Process_TIMER_output.R')
 # Read no policy scenario
 #NoPolicy <- ImportTimerScenario('NoPolicy','NoPolicy', Rundir, Project, TIMERGeneration)
 #NoPolicy_ind <- ProcessTimerScenario(NoPolicy, Rundir, Project)
