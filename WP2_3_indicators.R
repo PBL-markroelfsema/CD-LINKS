@@ -4,7 +4,7 @@ library(stringr)
 library(XLConnect)
 library(data.table)
 
-setwd("D:/Rwork/CD-LINKS")
+setwd("C:/Users/mrroelfs/OneDrive/CD-LINKS/6_R/CD-LINKS")
 #setwd("~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS/CD-LINKS/6_R/CD-LINKS")
 
 # create CD-LINKS model outputs (all)
@@ -14,9 +14,9 @@ setwd("D:/Rwork/CD-LINKS")
 #all_original <- ReadFactSheetData_raw('factsheet')
 #all_processed <- ReadFactSheetData('factsheet', all_original)
 currentdir <- getwd()
-factsheetdir <- "D:/Rwork/factsheet_oct2017/src"
+factsheetdir <- "C:/Users/mrroelfs/OneDrive/Rwork/factsheet_oct2017/src"
 #factsheetdir <- "~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS/CD-LINKS/6_R/factsheet_oct2017/src"
-factsheetdir <- "~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS/CD-LINKS/6_R/factsheet_oct2017/src"
+factsheetdir <- "../factsheet_oct2017/src"
 setwd(factsheetdir)
 source('main_WP2_3_indicators.R')
 setwd(currentdir)
@@ -62,7 +62,6 @@ stats <- c('mean', 'median', 'min', 'max', 'tenp', 'ninetyp')
 GWPCH4 = 25
 GWPN2O = 298
 
-
 # data from IMAGE
 Rundir=paste("~/disks/y/ontwapps/Timer/Users/Mathijs/Projects/CD-LINKS", sep="")
 Project=paste("CD-LINKS")
@@ -81,25 +80,115 @@ source('../TIMER_output/functions/Process_TIMER_output.R')
 # Historical data from PRIMAP
 # http://dataservices.gfz-potsdam.de/pik/showshort.php?id=escidoc:2959897
 PRIMAP <- read.csv("data/PRIMAP-hist_v1.2_14-Dec-2017.csv", header=TRUE, sep=",")
-regions_PRIMAP_history <- c("BRA", "CHN", "EU28", "IND", "JPN", "RUS", "USA", "EARTH")
-years_PRIMAP_history <- c("X1990", "X1995", "X2000", "X2005", "X2010", "X2015")
+PRIMAP_CDLINKS <- PRIMAP
+regions_CDLINKS_history <- c("BRA", "CHN", "EU28", "IND", "JPN", "RUS", "USA", "EARTH")
+years_CDLINKS_history <- c("X1990", "X1995", "X2000", "X2005", "X2010", "X2015")
+#PRIMAP_CDLINKS <- filter(PRIMAP_CDLINKS, country %in% c("BRA"))
+PRIMAP_CDLINKS <- filter(PRIMAP_CDLINKS, region %in% regions_CDLINKS_history)
+PRIMAP_CDLINKS$region=str_replace_all(PRIMAP_CDLINKS$region,"EARTH","World")
+PRIMAP_CDLINKS$region=str_replace_all(PRIMAP_CDLINKS$region,"EU28","EU")
+PRIMAP_CDLINKS$scenario=str_replace_all(PRIMAP_CDLINKS$scenario,"HISTORY","History")
+colnames(PRIMAP_CDLINKS)[colnames(PRIMAP_CDLINKS)=="country"] <- "region"
 
 # select data for Total Kyoto emissions from 1990 and transfer to MtCO2eq
-PRIMAP_selec_Kyoto <- filter(PRIMAP, country %in% regions_PRIMAP_history, category=="CAT0", entity=="KYOTOGHGAR4")
-PRIMAP_selec_Kyoto <- select(PRIMAP_selec_Kyoto, scenario, country, category, entity, unit, num_range("X", 1990:2015))
+PRIMAP_selec_Kyoto <- filter(PRIMAP_CDLINKS, category=="CAT0", entity=="KYOTOGHGAR4")
+PRIMAP_selec_Kyoto <- select(PRIMAP_selec_Kyoto, scenario, region, category, entity, unit, num_range("X", 1990:2015))
 PRIMAP_selec_Kyoto <- cbind(PRIMAP_selec_Kyoto[1:5], PRIMAP_selec_Kyoto[, 6:ncol(PRIMAP_selec_Kyoto)]/1000)
 # make dataframe structure for Kyoto emissions equal to data used for figure
-PRIMAP_selec_Kyoto$country=str_replace_all(PRIMAP_selec_Kyoto$country,"EARTH","World")
-PRIMAP_selec_Kyoto$country=str_replace_all(PRIMAP_selec_Kyoto$country,"EU28","EU")
-PRIMAP_selec_Kyoto$scenario=str_replace_all(PRIMAP_selec_Kyoto$scenario,"HISTORY","History")
 PRIMAP_selec_Kyoto <- mutate(PRIMAP_selec_Kyoto, variable="Emissions|Kyoto Gases")
-colnames(PRIMAP_selec_Kyoto)[colnames(PRIMAP_selec_Kyoto)=="country"] <- "region"
 PRIMAP_selec_Kyoto$unit <- "Mt CO2-equiv/yr"
 PRIMAP_selec_Kyoto <- mutate(PRIMAP_selec_Kyoto, source="PRIMAP")
 PRIMAP_selec_Kyoto <- mutate(PRIMAP_selec_Kyoto, statistic="value")
 PRIMAP_selec_Kyoto <- select(PRIMAP_selec_Kyoto, variable, scenario, region, unit, source, statistic, num_range("X", 1990:2015))
 colnames(PRIMAP_selec_Kyoto) = gsub("X", "", colnames(PRIMAP_selec_Kyoto))
 write.table(PRIMAP_selec_Kyoto, file="data/History_Kyoto.csv", sep=";", row.names = FALSE)
+
+# for figure 3)
+# Individual gases, split up in 'CO2 excl AFOLU CO2' and "AFOLU CO2"
+PRIMAP_selec_CO2 <- filter(PRIMAP_CDLINKS, category=="CAT0", entity=="CO2")
+PRIMAP_selec_CO2 <- select(PRIMAP_selec_CO2, scenario, region, category, entity, unit, num_range("X", 1990:2015))
+PRIMAP_selec_CO2 <- cbind(PRIMAP_selec_CO2[1:5], PRIMAP_selec_CO2[, 6:ncol(PRIMAP_selec_CO2)]/1000)
+PRIMAP_selec_CO2$unit <- "Mt CO2-equiv/yr"
+PRIMAP_selec_CO2 <- data.frame(PRIMAP_selec_CO2)
+PRIMAP_selec_CO2 <- mutate(PRIMAP_selec_CO2, variable="Emissions|CO2") %>% select(variable, scenario, region, category, entity, unit, everything())
+write.table(PRIMAP_selec_CO2, file="data/History_CO2.csv", sep=";", row.names = FALSE)
+
+PRIMAP_selec_Agriculture_CO2 <- filter(PRIMAP_CDLINKS, category=="CAT4", entity=="CO2")
+PRIMAP_selec_Agriculture_CO2 <- select(PRIMAP_selec_Agriculture_CO2, scenario, region, category, entity, unit, num_range("X", 1990:2015))
+PRIMAP_selec_Agriculture_CO2 <- cbind(PRIMAP_selec_Agriculture_CO2[1:5], PRIMAP_selec_Agriculture_CO2[, 6:ncol(PRIMAP_selec_Agriculture_CO2)]/1000)
+PRIMAP_selec_Agriculture_CO2$unit <- "Mt CO2-equiv/yr"
+PRIMAP_selec_Agriculture_CO2 <- data.frame(PRIMAP_selec_Agriculture_CO2)
+PRIMAP_selec_Agriculture_CO2 <- mutate(PRIMAP_selec_Agriculture_CO2, variable="Emissions|CO2|Agriculture") %>% select(variable, scenario, region, category, entity, unit, everything())
+write.table(PRIMAP_selec_Agriculture_CO2, file="data/History_CO2_Agriculture.csv", sep=";", row.names = FALSE)
+
+PRIMAP_selec_LULUCF_CO2 <- filter(PRIMAP_CDLINKS, category=="CAT5", entity=="CO2")
+PRIMAP_selec_LULUCF_CO2 <- select(PRIMAP_selec_LULUCF_CO2, scenario, region, category, entity, unit, num_range("X", 1990:2015))
+PRIMAP_selec_LULUCF_CO2 <- cbind(PRIMAP_selec_LULUCF_CO2[1:5], PRIMAP_selec_LULUCF_CO2[, 6:ncol(PRIMAP_selec_LULUCF_CO2)]/1000)
+PRIMAP_selec_LULUCF_CO2$unit <- "Mt CO2-equiv/yr"
+PRIMAP_selec_LULUCF_CO2 <- data.frame(PRIMAP_selec_LULUCF_CO2)
+PRIMAP_selec_LULUCF_CO2 <- mutate(PRIMAP_selec_LULUCF_CO2, variable="Emissions|CO2|LULUCF") %>% select(variable, scenario, region, category, entity, unit, everything())
+
+write.table(PRIMAP_selec_LULUCF_CO2, file="data/History_CO2_LULUCF.csv", sep=";", row.names = FALSE)
+
+# create AFOLU CO2' 
+PRIMAP_selec_Agriculture_CO2_tmp <- gather(PRIMAP_selec_Agriculture_CO2, 7:ncol(PRIMAP_selec_Agriculture_CO2), key="year", value=value)
+PRIMAP_selec_LULUCF_CO2_tmp <- gather(PRIMAP_selec_LULUCF_CO2, 7:ncol(PRIMAP_selec_LULUCF_CO2), key="year", value=value)
+PRIMAP_selec_AFOLU_CO2 <- rbind(PRIMAP_selec_Agriculture_CO2_tmp, PRIMAP_selec_LULUCF_CO2_tmp)
+PRIMAP_selec_AFOLU_CO2 <- group_by(PRIMAP_selec_AFOLU_CO2, scenario, region, entity, unit, year) %>% summarise(value=sum(value))
+PRIMAP_selec_AFOLU_CO2 <- mutate(PRIMAP_selec_AFOLU_CO2, category="CAT4+5") %>% select(scenario, region, category, entity, unit, year, value)
+PRIMAP_selec_AFOLU_CO2 <- spread(PRIMAP_selec_AFOLU_CO2, key=year, value=value)
+PRIMAP_selec_AFOLU_CO2 <- data.frame(PRIMAP_selec_AFOLU_CO2)
+PRIMAP_selec_AFOLU_CO2 <- mutate(PRIMAP_selec_AFOLU_CO2, variable="Emissions|CO2|AFOLU") %>% select(variable, scenario, region, category, entity, unit, everything())
+write.table(PRIMAP_selec_AFOLU_CO2, file="data/History_CO2_AFOLU.csv", sep=";", row.names = FALSE)
+
+# create 'CO2 excl AFOLU CO2'
+PRIMAP_selec_CO2_tmp <- gather(PRIMAP_selec_CO2, 7:ncol(PRIMAP_selec_CO2), key="year", value=value)
+PRIMAP_selec_AFOLU_CO2_tmp <- gather(PRIMAP_selec_AFOLU_CO2, 7:ncol(PRIMAP_selec_AFOLU_CO2), key="year", value=value)
+PRIMAP_selec_AFOLU_CO2_tmp$value <- -1*PRIMAP_selec_AFOLU_CO2_tmp$value
+PRIMAP_selec_CO2_Excl_AFOLU_CO2 <- rbind(PRIMAP_selec_CO2_tmp, PRIMAP_selec_AFOLU_CO2_tmp)
+PRIMAP_selec_CO2_Excl_AFOLU_CO2 <- group_by(PRIMAP_selec_CO2_Excl_AFOLU_CO2, scenario, region, entity, unit, year) %>% summarise(value=sum(value))
+PRIMAP_selec_CO2_Excl_AFOLU_CO2 <- mutate(PRIMAP_selec_CO2_Excl_AFOLU_CO2, category="CAT0-CAT4/5") %>% select(scenario, region, category, entity, unit, year, value)
+PRIMAP_selec_CO2_Excl_AFOLU_CO2 <- spread(PRIMAP_selec_CO2_Excl_AFOLU_CO2, key=year, value=value)
+PRIMAP_selec_CO2_Excl_AFOLU_CO2 <- data.frame(PRIMAP_selec_CO2_Excl_AFOLU_CO2)
+PRIMAP_selec_CO2_Excl_AFOLU_CO2 <- mutate(PRIMAP_selec_CO2_Excl_AFOLU_CO2, variable="Emissions|CO2 Excl. AFOLU") %>% select(variable, scenario, region, category, entity, unit, everything())
+write.table(PRIMAP_selec_CO2_Excl_AFOLU_CO2, file="data/History_CO2_ExclAFOLU.csv", sep=";", row.names = FALSE)
+
+PRIMAP_selec_CH4 <- filter(PRIMAP_CDLINKS, category=="CAT0", entity=="CH4")
+PRIMAP_selec_CH4 <- select(PRIMAP_selec_CH4, scenario, region, category, entity, unit, num_range("X", 1990:2015))
+PRIMAP_selec_CH4 <- cbind(PRIMAP_selec_CH4[1:5], GWPCH4*PRIMAP_selec_CH4[, 6:ncol(PRIMAP_selec_CH4)]/1000)
+PRIMAP_selec_CH4$unit <- "Mt CO2-equiv/yr"
+PRIMAP_selec_CH4 <- data.frame(PRIMAP_selec_CH4)
+PRIMAP_selec_CH4 <- mutate(PRIMAP_selec_CH4, variable="Emissions|CH4") %>% select(variable, scenario, region, category, entity, unit, everything())
+write.table(PRIMAP_selec_CH4, file="data/History_CH4.csv", sep=";", row.names = FALSE)
+
+PRIMAP_selec_N2O <- filter(PRIMAP_CDLINKS, category=="CAT0", entity=="N2O")
+PRIMAP_selec_N2O <- select(PRIMAP_selec_N2O, scenario, region, category, entity, unit, num_range("X", 1990:2015))
+PRIMAP_selec_N2O <- cbind(PRIMAP_selec_N2O[1:5], GWPN2O*PRIMAP_selec_N2O[, 6:ncol(PRIMAP_selec_N2O)]/1000)
+PRIMAP_selec_N2O$unit <- "Mt CO2-equiv/yr"
+PRIMAP_selec_N2O <- data.frame(PRIMAP_selec_N2O)
+PRIMAP_selec_N2O <- mutate(PRIMAP_selec_N2O, variable="Emissions|N2O") %>% select(variable, scenario, region, category, entity, unit, everything())
+write.table(PRIMAP_selec_N2O, file="data/History_N2O.csv", sep=";", row.names = FALSE)
+
+PRIMAP_selec_FGases <- filter(PRIMAP_CDLINKS, category=="CAT0", entity==ifelse(GWPCH4==25, "FGASESAR4", "FGASES"))
+PRIMAP_selec_FGases <- select(PRIMAP_selec_FGases, scenario, region, category, entity, unit, num_range("X", 1990:2015))
+PRIMAP_selec_FGases <- cbind(PRIMAP_selec_FGases[1:5], PRIMAP_selec_FGases[, 6:ncol(PRIMAP_selec_FGases)]/1000)
+PRIMAP_selec_FGases$unit <- "Mt CO2-equiv/yr"
+PRIMAP_selec_FGases <- data.frame(PRIMAP_selec_FGases)
+PRIMAP_selec_FGases <- mutate(PRIMAP_selec_FGases, variable="Emissions|FGases") %>% select(variable, scenario, region, category, entity, unit, everything())
+write.table(PRIMAP_selec_FGases, file="data/History_FGases.csv", sep=";", row.names = FALSE)
+
+# add gases to one data frame
+PRIMAP_selec_Gases <- rbind(PRIMAP_selec_CO2_Excl_AFOLU_CO2, PRIMAP_selec_AFOLU_CO2) %>% 
+                      rbind(PRIMAP_selec_CH4) %>%
+                      rbind(PRIMAP_selec_N2O) %>% 
+                      rbind(PRIMAP_selec_FGases)
+PRIMAP_selec_Gases <- mutate(PRIMAP_selec_Gases, source="PRIMAP")
+PRIMAP_selec_Gases <- mutate(PRIMAP_selec_Gases, statistic="value")
+PRIMAP_selec_Gases <- select(PRIMAP_selec_Gases, variable, scenario, region, unit, source, statistic, everything())
+PRIMAP_selec_Gases <- select(PRIMAP_selec_Gases, -category, -entity)
+colnames(PRIMAP_selec_Gases) = gsub("X", "", colnames(PRIMAP_selec_Gases))
+write.table(PRIMAP_selec_Gases, file="data/History_AllGases.csv", sep=";", row.names = FALSE)
+
 
 # FIGURE 1
 # Create GHG emissions data, median, min, max
@@ -145,12 +234,20 @@ d_cd_links_CO2_exclAFOLU <- as.data.frame(d_cd_links_CO2_exclAFOLU)
 d_cd_links_GHG_countries <- rbind(d_cd_links_GHG_countries, d_cd_links_CO2_exclAFOLU)
 d_cd_links_GHG_countries <- filter(d_cd_links_GHG_countries, variable!="Emissions|CO2")
 d_cd_links_GHG_countries <- arrange(d_cd_links_GHG_countries, scenario, region, year, variable, model)
-# add historic data
 
+d_cd_links_GHG_countries <- filter(d_cd_links_GHG_countries, year>=2010, year<=2050)
+d_cd_links_GHG_countries_stat <- group_by(d_cd_links_GHG_countries, scenario, region, year, variable, unit) %>% summarise(mean=mean(value,na.rm=TRUE),
+                                                                                                                                 median=median(value,na.rm=TRUE),
+                                                                                                                                 min=min(value, na.rm=TRUE),
+                                                                                                                                 max=max(value, na.rm=TRUE),
+                                                                                                                                 tenp=quantile(value, .10, na.rm=TRUE),
+                                                                                                                                 ninetyp=quantile(value, .90, na.rm=TRUE))
+d_cd_links_GHG_countries_stat <- gather(d_cd_links_GHG_countries_stat, 'mean', 'median', 'min', 'max', 'tenp', 'ninetyp', key='statistic', value=value)
+d_cd_links_GHG_countries_stat <- spread(d_cd_links_GHG_countries_stat, key=year, value=value)
+d_cd_links_GHG_countries_stat <- mutate(d_cd_links_GHG_countries_stat, source="CD-LINKS")
+d_cd_links_GHG_countries_stat <- select(d_cd_links_GHG_countries_stat, variable, scenario, region, unit, source, statistic, everything())
+write.table(d_cd_links_GHG_countries_stat , file="data/figure3.csv", sep=";", row.names = FALSE)
 
-
-#d_variable <- unique(all_cd_links$variable)
-#all_cd_links$variable <- factor(all_cd_links$variable, levels=d_variable)
 
 # FIGURE 5
 start_year_fig5=2010
@@ -218,7 +315,7 @@ data_figure5_CO2budget_stat <- group_by(data_figure5_CO2budget_stat, scenario, r
                                                                                                        ninetyp=quantile(value, .90, na.rm=TRUE))
 data_figure5_CO2budget_stat <- data_figure5_CO2budget_stat %>% ungroup() %>% select(-year)
 data_figure5_CO2budget_stat <- gather(data_figure5_CO2budget_stat, 'mean', 'median', 'min', 'max', 'tenp', 'ninetyp', key='statistic', value=`2100`)
-data_figure5_CO2budget_stat$statistic <- factor(data_figure5_CO2budget_stat$statistic, level=statistics)
+data_figure5_CO2budget_stat$statistic <- factor(data_figure5_CO2budget_stat$statistic, level=stats)
 
 #4 Export to Excel (change later to R code)
 write.table(data_figure5_CO2emissions_model , file="data/figure5_CO2emissions_model.csv", sep=";", row.names = FALSE) 
